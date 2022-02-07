@@ -1,0 +1,51 @@
+double GKp=0.02;
+double GKi=0.1;
+double GKd=1;
+
+unsigned long tempsActuel, tempsPrecedent;
+double tempsEcoule;
+double erreur;
+double erreurPrecedente;
+double mesure, consigne, consigneCorr;
+double erreurCumulee, variationErreur;
+
+
+void setup() {
+  //ETEINTE 250 allumé 412
+consigne =416 ;
+Serial.begin(9600);
+}
+
+void loop() {
+
+  mesure = analogRead(A7);
+  if (mesure < consigne +3)
+    consigneCorr = calculPID(mesure);
+  else
+    consigneCorr =0;
+  delay(100);
+  if (consigneCorr <0)
+    consigneCorr =0;
+  else if (consigneCorr > 1024)
+    consigneCorr =1023;
+  Serial.println(mesure);
+  analogWrite(3, consigneCorr);
+
+}
+
+double calculPID(double mes)
+{
+  tempsActuel = millis();
+  tempsEcoule = (double)(tempsActuel-tempsPrecedent);
+
+  erreur = consigne - mes;
+  erreurCumulee += erreur * tempsEcoule;
+  variationErreur = ( erreur- erreurPrecedente)/tempsEcoule;
+
+  double corr = GKp*erreur + GKi * erreurCumulee + GKd * variationErreur;
+
+  erreurPrecedente = erreur;
+  tempsPrecedent = tempsActuel;
+
+  return corr;
+}
